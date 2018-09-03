@@ -63,3 +63,4 @@ while alfabe<29:
     #fo.write("En Son Yapılan Kelime: "+str(kelime)+"\n")
 fo.close()
 f.close()
+driver.close()
