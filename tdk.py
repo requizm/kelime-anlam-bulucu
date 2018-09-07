@@ -5,7 +5,7 @@ from selenium.common.exceptions import NoSuchElementException
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support.ui import Select
 import time
-driver = webdriver.PhantomJS(executable_path='/home/mehmet41650/phantomjs-2.1.1-linux-x86_64/bin/phantomjs')
+driver = webdriver.PhantomJS(executable_path='phantomjs-2.1.1-linux-x86_64/bin/phantomjs')
 driver.get("http://tdk.org.tr/index.php?option=com_yazimkilavuzu&view=yazimkilavuzu")
 driver.implicitly_wait(3)
 harfler = ['a','b','c','ç','d','e','f','g','ğ','h','ı','i','j','k','l','m','n','o','ö','p','r','s','ş','t','u','ü','v','y','z']
