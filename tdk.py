@@ -1,12 +1,10 @@
 #-*- coding: utf-8 -*- 
-import sys
 from selenium import webdriver
 from selenium.webdriver.common.keys import Keys
 from selenium.common.exceptions import NoSuchElementException
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support.ui import Select
 import time
-sys.setdefaultencoding('utf8')
 driver = webdriver.PhantomJS(executable_path='/home/mehmet41650/phantomjs-2.1.1-linux-x86_64/bin/phantomjs')
 driver.get("http://tdk.org.tr/index.php?option=com_yazimkilavuzu&view=yazimkilavuzu")
 driver.implicitly_wait(3)
