@@ -1,7 +1,6 @@
 # encoding=utf8
 import sys,lxml,urllib
 import mechanicalsoup
-import os
 from importlib import reload
 from bs4 import BeautifulSoup
 from urllib.parse import urlsplit, urlunsplit, quote
