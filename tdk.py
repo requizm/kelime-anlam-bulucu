@@ -1,63 +1,101 @@
-#-*- coding: utf-8 -*- 
-from selenium import webdriver
-from selenium.webdriver.common.keys import Keys
-from selenium.common.exceptions import NoSuchElementException
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support.ui import Select
-import time
-driver = webdriver.PhantomJS(executable_path='/app/phantomjs-2.1.1-linux-x86_64/bin/phantomjs')
-driver.get("http://tdk.org.tr/index.php?option=com_yazimkilavuzu&view=yazimkilavuzu")
-driver.implicitly_wait(3)
-harfler = ['a','b','c','ç','d','e','f','g','ğ','h','ı','i','j','k','l','m','n','o','ö','p','r','s','ş','t','u','ü','v','y','z']
-xpath = '//*[@id="hor-minimalist-a"]/tbody'
-f = open('wordlistmean.txt', 'w')
-fo = open('hataoldumu.txt','w')
+# encoding=utf8
+import sys,lxml,urllib
+import mechanicalsoup
+import os
+from importlib import reload
+from bs4 import BeautifulSoup
+from urllib.parse import urlsplit, urlunsplit, quote
+reload(sys)
 
-alfabe = 1
-while alfabe<29:
-    textbox = driver.find_element_by_id('kelime').send_keys(harfler[alfabe])
-    driver.find_element_by_id('gonderID').click()
-    kelimesayisi = driver.find_elements_by_class_name('thomicb')
-    print(len(kelimesayisi))
-    options = driver.find_elements_by_tag_name('option')
-    sayfasayisi = options[len(options)-1].text
-    mevcutsayfa=1
+def iri2uri(iri):
+    """
+    Convert an IRI to a URI (Python 3).
+    """
+    uri = ''
+    if isinstance(iri, str):
+        (scheme, netloc, path, query, fragment) = urlsplit(iri)
+        scheme = quote(scheme)
+        netloc = netloc.encode('idna').decode('utf-8')
+        path = quote(path)
+        query = quote(query)
+        fragment = quote(fragment)
+        uri = urlunsplit((scheme, netloc, path, query, fragment))
 
-    while mevcutsayfa < int(sayfasayisi)+1:
-        i = 1
-        webel = driver.find_element_by_xpath('//*[@id="sayfa2"]/p/select')
-        slt1 = Select(webel)
-        if mevcutsayfa != 1:
-            slt1.select_by_visible_text(str(mevcutsayfa))            
-        print("mevcut sayfa: " + str(mevcutsayfa))
-        trler = driver.find_elements_by_xpath('/html/body/div[1]/div[3]/div/div/div[1]/table[2]/tbody/tr')
-        while i<=len(trler):
-            print("i'nin durumu: "+str(i))
-            sayacsayisi = driver.find_elements_by_xpath('/html/body/div[1]/div[3]/div/div/div[1]/table[2]/tbody/tr['+ str(i) +']/td')
-            sayac = 1
-            while sayac<=len(sayacsayisi):
-                print("sayac: "+str(sayac))
-                aelement=driver.find_element_by_xpath('/html/body/div[1]/div[3]/div/div/div[1]/table[2]/tbody/tr['+ str(i) +']/td['+ str(sayac) +']/p/a[2]')
-                kelime = aelement.text
-                aelement.click()
-                try:
-                    anlam = driver.find_element_by_xpath(xpath).text
-                    f.write(kelime + "/" + anlam+"\n-\n")
-                    print(kelime + " / " + anlam)
-                except NoSuchElementException:
-                    fo.write(kelime+"\n")
-                    print("anlamı olmayan kelime: "+kelime)
-                    pass
-                driver.back()
-                sayac += 1
-            i +=1
-        mevcutsayfa +=1
-    alfabe +=1
-    
-    #fo.write(str(e) + "\n")
-    #fo.write("!!! Mevcut Harf: "+ harfler[alfabe]+"\n")
-    #fo.write("Mevcut Sayfa: "+str(mevcutsayfa)+"\n")
-    #fo.write("En Son Yapılan Kelime: "+str(kelime)+"\n")
-fo.close()
-f.close()
-driver.close()
+    return uri
+
+class TdkBot:
+
+    def __init__(self):
+        #self.br = mechanicalsoup.StatefulBrowser()
+        #self.br.open("http://tdk.org.tr/index.php?option=com_yazimkilavuzu&view=yazimkilavuzu")
+        self.browser = mechanicalsoup.Browser()
+        self.page = self.browser.get('http://tdk.org.tr/index.php?option=com_yazimkilavuzu&view=yazimkilavuzu')
+        
+
+    def begin(self):
+        self.main()
+
+
+    def main(self):
+        self.harfler = ['a','b','c','ç','d','e','f','g','h','ı','i','j','k','l','m','n','o','ö','p','r','s','ş','t','u','ü','v','y','z']
+        self.f = open("output.txt","w")
+        for self.harf in self.harfler:
+            
+            self.form = self.page.soup.select("#isimAraID")[0]
+            self.form.select("#kelime")[0]['value'] = self.harf
+            self.page = self.browser.submit(self.form,self.page.url)
+            #self.br.select_form('#isimAraID')
+            #self.br['kelime']=harf
+            #self.br.submit_selected()
+            
+            self.optionlar = self.page.soup.select('option')
+            del self.optionlar[0:3]
+            self.sayfa_sayisi = len(self.optionlar) - 1
+            print(self.sayfa_sayisi)
+            self.mevcutsayfa = 1
+            while self.mevcutsayfa <= self.sayfa_sayisi:
+                self.kelimeler = self.page.soup.findAll("p",{"class":"thomicb"})
+                print(len(self.kelimeler))
+                self.i=1
+                for self.kelime in self.kelimeler:
+                    self.element = self.kelime.select('a')[1]
+                    self.element_href = self.element.get('href')
+                    self.element_adi = self.element.text
+                    #print(self.element_href)
+                    #print(iri2uri(self.element_href))
+                    self.page_anlam = urllib.request.build_opener(urllib.request.HTTPCookieProcessor())
+                    self.page_anlam = self.page_anlam.open('http://tdk.org.tr'+iri2uri(self.element_href))
+                    self.anlamsoup = BeautifulSoup(self.page_anlam.read(),"lxml")
+                    #tablo = anlamsoup.select("table")[2]
+                    self.tablo = self.anlamsoup.find("table", {"id": "hor-minimalist-a"})
+                    self.tr = self.tablo.findAll("tr")
+                    self.mevcut_tr = 1
+                    print("işte kelime: "+self.element_adi)
+                    self.f.writelines( self.element_adi + "/")
+
+                    while self.mevcut_tr<len(self.tr):
+                        self.f.writelines(self.tr[self.mevcut_tr].text)
+                        self.mevcut_tr += 1
+                    self.f.writelines(" - \n")
+                    self.i +=1
+
+                self.sonrakisayfa = self.page.soup.findAll("span", {"class": "comicm"})
+                self.sonrakisayfa = self.sonrakisayfa[1].select('a')[0]
+                self.srksyf = urllib.request.build_opener(urllib.request.HTTPCookieProcessor())
+                self.srksyf = self.srksyf.open('http://tdk.org.tr'+iri2uri(self.sonrakisayfa.get('href')))
+                self.soup = BeautifulSoup(self.srksyf.read(),"lxml")
+                self.yenikelimeler = self.soup.findAll('p', {"class": "thomicb"})
+                print(self.kelimeler[0].text + " " + self.yenikelimeler[0].text)
+
+                if self.kelimeler[0].text == self.yenikelimeler[0].text:
+                    break
+                else:
+                    print(str(self.mevcutsayfa)+". Sayfa Bitti")
+                    self.mevcutsayfa += 1
+               
+        self.f.close()
+        self.br.close()
+
+if __name__=="__main__":
+    bot = TdkBot()
+    bot.begin()
