@@ -46,7 +46,7 @@ class TdkBot:
             #self.br.select_form('#isimAraID')
             #self.br['kelime']=harf
             #self.br.submit_selected()
-            
+            ffff
             self.optionlar = self.page.soup.select('option')
             del self.optionlar[0:3]
             self.sayfa_sayisi = len(self.optionlar) - 1
