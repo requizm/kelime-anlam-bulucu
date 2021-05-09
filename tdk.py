@@ -6,7 +6,7 @@ from bs4 import BeautifulSoup
 from urllib.parse import urlsplit, urlunsplit, quote
 reload(sys)
 
-def iri2uri(iri):
+def iri2uri(iri):ff
     """
     Convert an IRI to a URI (Python 3).
     """
